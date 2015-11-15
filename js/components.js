@@ -1,17 +1,20 @@
 var App = {
     controller: function (args) {
-      this.activePageId = args.activePageId;
-      this.accounts = args.accounts;
+      //this.state = args.getState();
+      //this.activePageId = state.activePageId;
+      //this.accounts = state.accounts;
     },
     view: function (ctrl, args) {
+        var state = args.getState();
+
         return m('div',
             [
                 m.component(
                   AccountOverview,
-                  {id: "accounts", accounts: ctrl.accounts, activePageId: ctrl.activePageId}
+                  {id: "accounts", accounts: state.accounts, activePageId: state.activePageId}
                 ),
-                ctrl.accounts.map(function (account) {
-                  return m.component(Account, {activePageId: args.activePageId, account: account});
+                state.accounts.map(function (account) {
+                  return m.component(Account, {activePageId: state.activePageId, account: account});
                 })
             ]
         )
@@ -20,10 +23,12 @@ var App = {
 
 var AccountOverview = {
     controller: function (args) {
-        this.activePage = args.activePageId == args.id ? '.active' : '';
+        this.activePage = function (activePageId, id) {
+          return activePageId == id ? '.active' : '';
+        };
     },
     view: function (ctrl, args) {
-        return m('div#'+args.id+'.page'+ctrl.activePage,
+        return m('div#'+args.id+'.page'+ctrl.activePage(args.activePageId, args.id),
             m('table.table.table-bordered.table-condensed',
                 [
                     m('thead',
@@ -54,7 +59,9 @@ var AccountOverview = {
 
 var Account = {
     controller: function (args) {
-        this.activePage = args.activePageId == args.name ? '.active' : '';
+        this.activePage = function (activePageId, id) {
+          return activePageId == id ? '.active' : '';
+        };
 
         this.handleTransactionSubmit = function (transaction) {
         // calculate balance
@@ -65,7 +72,8 @@ var Account = {
         }
     },
     view: function (ctrl, args) {
-        return m('div#'+args.account.name+'.page'+ctrl.activePage,
+        var activePageId = store.getState().activePageId;
+        return m('div#'+args.account.name+'.page'+ctrl.activePage(activePageId, args.account.name),
             [
                 m('div.row',
                     [
@@ -91,14 +99,16 @@ var Account = {
 
 var Nav = {
     controller: function (args) {
-      this.activePageId = args.activePageId;
-      this.accounts = args.accounts;
+      //var state = args.getState();
+      //this.activePageId = state.activePageId;
+      //this.accounts = state.accounts;
 
-      this.isActive = function (id) {
-        if (this.activePageId == id) return "active"
+      this.isActive = function (activePageId, id) {
+        console.log(activePageId);
+        if (activePageId == id) return "active"
         // also match for the tab/dropdown item
         else if (
-            this.activePageId !== defaultActivePageId
+            activePageId !== defaultActivePageId
             && !id
         ) {
             return "active";
@@ -111,14 +121,15 @@ var Nav = {
       }
     },
     view: function (ctrl, args) {
+        var state = args.getState();
         return (
             m('nav#primaryNav[role=tablist]',
               m('ul.nav.nav-tabs',
                 [
-                    m('li[role=presentation]', {className: ctrl.isActive("accounts")},
+                    m('li[role=presentation]', {className: ctrl.isActive(state.activePageId, "accounts")},
                       m('a[href=#/accounts][role=tab]', "Accounts overview")
                     ),
-                    m('li[role=tab].dropdown', {className: ctrl.isActive(), onclick: ctrl.clickHandler},
+                    m('li[role=tab].dropdown', {className: ctrl.isActive(state.activePageId), onclick: ctrl.clickHandler},
                       [
                         m('a#nav-dropdown.dropdown-toggle[aria-expanded=false][aria-haspopup=true][type=button][role=button]',
                           [
@@ -132,9 +143,9 @@ var Nav = {
                           ]
                         ),
                         m('ul.dropdown-menu[role=menu]',
-                          ctrl.accounts.map(function (account) {
+                          state.accounts.map(function (account) {
                             return (
-                                m('li', {className: ctrl.isActive(account.name)},
+                                m('li', {className: ctrl.isActive(state.activePageId, account.name)},
                                   m('a', {href: "#/"+account.name}, account.name)
                                 )
                             )

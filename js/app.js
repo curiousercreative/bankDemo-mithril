@@ -141,24 +141,24 @@
         //window.store = createStoreWithMiddleware(reducer, {activePageId: getActivePageId(), accounts: accounts});
         window.store = Redux.createStore(bankApp, {activePageId: getActivePageId(), accounts: accounts});
 
-        // redraws Mitrhil whenever an action is dispatched
+        // redraws Mithril whenever an action is dispatched
         store.subscribe(function () {
           console.log('happening');
           m.redraw.strategy('all');
           m.redraw(true);
         });
 
-    // Render React
+    // Render Mithril
         // content
         m.mount(
           document.getElementById('content'),
-          m.component(App, store.getState())
+          m.component(App, store)
         );
 
         // nav
         m.mount(
             document.getElementById('navContainer'),
-            m.component(Nav, store.getState())
+            m.component(Nav, store)
         );
 
     // Listen for hashChanges
