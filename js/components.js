@@ -1,156 +1,176 @@
-var App = React.createClass({
-    render: function () {
-        return (
-            React.createElement('div', null,
+var App = {
+    controller: function (args) {
+      var state = store.getState();
+
+      this.activePageId = state.activePageId;
+      this.accounts = accounts;
+    },
+    view: function (ctrl, args) {
+        return m('div',
+            [
+                m.component(
+                  AccountOverview,
+                  {id: "accounts", accounts: ctrl.accounts, activePageId: ctrl.activePageId}
+                ),
+                ctrl.accounts.map(function (account) {
+                  return m.component(Account, {activePageId: args.activePageId, account: account});
+                })
+            ]
+        )
+    }
+};
+
+var AccountOverview = {
+    controller: function (args) {
+        this.activePage = args.activePageId == args.id ? '.active' : '';
+    },
+    view: function (ctrl, args) {
+        return m('div#'+args.id+'.page'+ctrl.activePage,
+            m('table.table.table-bordered.table-condensed',
                 [
-                    React.createElement(AccountOverview, {id: "accounts", accounts: this.props.accounts, activePageId: this.props.activePageId}),
-                    this.props.accounts.map(function (account, key) {
-                        return (
-                            React.createElement(Account, {
-                                key: key,
-                                id: account.name,
-                                name: account.name,
-                                balance: account.balance,
-                                transactions: account.transactions
-                            })
+                    m('thead',
+                        m('tr',
+                            [
+                                m('th', 'Account'),
+                                m('th', 'Balance')
+                            ]
                         )
-                    })
+                    ),
+                    m('tbody',
+                        args.accounts.map(function (account, i) {
+                            return m('tr',
+                                [
+                                    m('td.accountName',
+                                        m('a', {href: '#/'+account.name}, account.name) // make dynamic
+                                    ),
+                                    m('td.currency', formatCurrency(account.balance))
+                                ]
+                            );
+                        })
+                    )
                 ]
             )
         );
     }
-});
+};
 
-var Nav = React.createClass({
-    isActive: function (id) {
-        if (this.props.activePageId == id) return "active"
+var Account = {
+    controller: function (args) {
+        this.activePage = args.activePageId == args.name ? '.active' : '';
+
+        this.handleTransactionSubmit = function (transaction) {
+        // calculate balance
+            transaction.balance = parseFloat(args.account.balance) + parseFloat(transaction.amount);
+
+        // update state
+            store.dispatch(addTransaction(transaction, transaction.balance, args.account.name));
+        }
+    },
+    view: function (ctrl, args) {
+        return m('div#'+args.account.name+'.page'+ctrl.activePage,
+            [
+                m('div.row',
+                    [
+                        m('h1.col-md-6.accountName', args.account.name),
+                        m('div.col-md-6.text-center',
+                            m('div.well.well-sm.accountBalance',
+                                [
+                                    m('span.h5', "Account Balance:"),
+                                    m('strong.currency', formatCurrency(args.account.balance))
+                                ]
+                            )
+                        )
+                    ]
+                ),
+                m('h2.h3', 'Record new transaction'),
+                m.component(TranasctionForm, {onTransactionSubmit: ctrl.handleTransactionSubmit}),
+                m('h2.h3', 'Transaction history'),
+                m.component(TransactionLedger, {balance: args.account.balance, transactions: args.account.transactions})
+            ]
+        )
+    }
+};
+
+var Nav = {
+    controller: function (args) {
+      var state = store.getState();
+      this.activePageId = state.activePageId;
+      this.accounts = state.accounts;
+
+      this.isActive = function (id) {
+        if (this.activePageId == id) return "active"
         // also match for the tab/dropdown item
         else if (
-            this.props.activePageId !== defaultActivePageId
+            this.activePageId !== defaultActivePageId
             && !id
         ) {
             return "active";
         }
         else return "";
+      }
+
+      this.clickHandler = function (e) {
+        $(e.target).closest('li.dropdown').toggleClass("open");
+      }
     },
-    render: function () {
+    view: function (ctrl, args) {
         return (
-            React.createElement(ReactBootstrap.Nav, {bsStyle:"tabs", id: "primaryNav"},
+            m('nav#primaryNav[role=tablist]',
+              m('ul.nav.nav-tabs',
                 [
-                    React.createElement(ReactBootstrap.NavItem, {className: this.isActive("accounts"), href: "#/accounts"}, "Accounts overview"),
-                    React.createElement(ReactBootstrap.NavDropdown, {className: this.isActive(), title: "Accounts", id: "nav-dropdown"},
-                        accounts.map(function (account, key) {
+                    m('li[role=presentation]', {className: ctrl.isActive("accounts")},
+                      m('a[href=#/accounts][role=tab]', "Accounts overview")
+                    ),
+                    m('li[role=tab].dropdown', {className: ctrl.isActive(), onclick: ctrl.clickHandler},
+                      [
+                        m('a#nav-dropdown.dropdown-toggle[aria-expanded=false][aria-haspopup=true][type=button][role=button]',
+                          [
+                            m('span', 'Accounts'),
+                            m('span',
+                              [
+                                m('span'),
+                                m('span.caret')
+                              ]
+                            )
+                          ]
+                        ),
+                        m('ul.dropdown-menu[role=menu]',
+                          ctrl.accounts.map(function (account) {
                             return (
-                                React.createElement(ReactBootstrap.MenuItem, {
-                                    key: key,
-                                    className: this.isActive(account.name),
-                                    href: "#/"+account.name
-                                    },
-                                    account.name
+                                m('li', {className: ctrl.isActive(account.name)},
+                                  m('a', {href: "#/"+account.name}, account.name)
                                 )
-                            )  
-                        }, this)
+                            )
+                          })
+                        )
+                      ]
                     )
                 ]
+              )
             )
         )
     }
-})
+};
 
-var AccountOverview = React.createClass({
-    isActivePage: function () {
-        return store.getState().activePageId == this.props.id ? ' active' : '';
-    },
-    render: function () {
+var TransactionLedger = {
+    view: function (ctrl, args) {
         return (
-            React.createElement('div', {className: 'page'+this.isActivePage(), id: this.props.id},
-                React.createElement(ReactBootstrap.Table, {bordered: true, condensed: true},
-                    [
-                        React.createElement('thead', null,
-                            React.createElement('tr', null,
-                                [
-                                    React.createElement('th', null, 'Account'),
-                                    React.createElement('th', null, 'Balance')
-                                ]
-                            )
-                        ),
-                        React.createElement('tbody', null,
-                            this.props.accounts.map(function (account, i) {
-                                return React.createElement('tr', {key: i},
-                                    [
-                                        React.createElement('td', {className: 'accountName'},
-                                            React.createElement('a', {href: "#/"+account.name}, account.name)
-                                        ),
-                                        React.createElement('td', {className: 'currency'}, formatCurrency(account.balance))
-                                    ]
-                                );
-                            })
-                        )
-                    ]
-                )
-            )
-        );
-    }
-});
-
-var Account = React.createClass({
-    isActivePage: function () {
-        return store.getState().activePageId == this.props.id ? ' active' : '';
-    },
-    handleTransactionSubmit: function (transaction) {
-    // calculate balance
-        transaction.balance = parseFloat(this.props.balance) + parseFloat(transaction.amount);
-    
-    // update state
-        store.dispatch(addTransaction(transaction, transaction.balance, this.props.name));
-    },
-    render: function () {
-        return (
-            React.createElement('div', {className: 'page'+this.isActivePage(), id: this.props.name},
+            m('table#ledger.table.table-bordered',
                 [
-                    React.createElement('div', {className: 'row'},
-                        [
-                            React.createElement('h1', {className: 'col-md-6 accountName'}, this.props.name),
-                            React.createElement('div', {className: 'col-md-6 text-center'},
-                                React.createElement('div', {className: "well well-sm accountBalance"},
-                                    [
-                                        React.createElement('span', {className: 'h5'}, "Account Balance:"),
-                                        React.createElement('strong', {className: 'currency'}, formatCurrency(this.props.balance))
-                                    ]
-                                )
-                            )
-                        ]
-                    ),
-                    React.createElement('h2', {className: 'h3'}, 'Record new transaction'),
-                    React.createElement(TranasctionForm, {onTransactionSubmit: this.handleTransactionSubmit}),
-                    React.createElement('h2', {className: 'h3'}, 'Transaction history'),
-                    React.createElement(TransactionLedger, {balance: this.props.balance, transactions: this.props.transactions})
-                ]
-            )
-        );
-    }
-});
-
-var TransactionLedger = React.createClass({
-    render: function () {
-        return (
-            React.createElement(ReactBootstrap.Table, {id: 'ledger', collapsed: true, bordered: true},
-                [
-                    React.createElement('thead', null,
-                        React.createElement('tr', null,
+                    m('thead',
+                        m('tr',
                             [
-                                React.createElement('th', null, 'Date'),
-                                React.createElement('th', null, 'Description'),
-                                React.createElement('th', {className: "currency"}, 'Amount'),
-                                React.createElement('th', {className: "currency"}, 'Balance')
+                                m('th', 'Date'),
+                                m('th', 'Description'),
+                                m('th.currency', 'Amount'),
+                                m('th.currency', 'Balance')
                             ]
                         )
                     ),
-                    React.createElement('tbody', null,
-                        this.props.transactions.map(function (transaction, key) {
+                    m('tbody',
+                        args.transactions.map(function (transaction) {
                             return (
-                                React.createElement(Transaction, {
-                                    key: key,
+                                m.component(Transaction, {
                                     date: transaction.date,
                                     amount: transaction.amount,
                                     description: transaction.description,
@@ -163,60 +183,91 @@ var TransactionLedger = React.createClass({
             )
         );
     }
-});
+};
 
-var Transaction = React.createClass({
-    getType: function (amount) {
-        return parseFloat(amount) > 0 ? 'deposit' : ' withdrawal';
-    },
-    render: function () {
-        return (
-            React.createElement('tr', {className: 'transaction '+this.getType(this.props.amount)},
-                [
-                    React.createElement('td', null,
-                        React.createElement('time', {dateTime: formatDateISO(new Date(this.props.date))}, formatDate(new Date(this.props.date)))
-                    ),
-                    React.createElement('td', null, this.props.description),
-                    React.createElement('td', {className: "currency"}, formatCurrency(this.props.amount)),
-                    React.createElement('td', {className: "currency"}, formatCurrency(this.props.balance))
-                ]
-            )   
-        )
-    }
-});
-
-var TranasctionForm = React.createClass({
-    submitHandler: function (e) {
-        e.preventDefault();
-        
-    // prep transaction object
-        var transaction = {
-            amount: this.refs.type.getValue() + this.refs.amount.getValue(),
-            description: this.refs.description.getValue(),
-            date: Date.now()
+var Transaction = {
+    controller: function (args) {
+        this.getType = function (amount) {
+            return parseFloat(amount) > 0 ? 'deposit' : ' withdrawal';
         }
-
-    // pass off to parent
-        this.props.onTransactionSubmit(transaction);
-        
-    // reset form
-        e.target.reset();
     },
-    render: function () {
+    view: function (ctrl, args) {
         return (
-            React.createElement('form', {onSubmit: this.submitHandler},
+            m('tr', {className: 'transaction '+ctrl.getType(args.amount)},
                 [
-                    React.createElement(ReactBootstrap.Input, {groupClassName: "col-md-3", type: 'select', label: 'Transaction type', placeholder: 'select account', ref: 'type'},
-                        [
-                            React.createElement('option', {value: ''}, 'Deposit'),
-                            React.createElement('option', {value: '-'}, 'Withdraw')
-                        ]
+                    m('td', null,
+                        m('time', {dateTime: formatDateISO(new Date(args.date))}, formatDate(new Date(args.date)))
                     ),
-                    React.createElement(ReactBootstrap.Input, {groupClassName: "col-md-4", placeholder: '10.00', type: 'number', ref: 'amount', label: 'Transaction amount', addonBefore:"$"}),
-                    React.createElement(ReactBootstrap.Input, {groupClassName: "col-md-5", placeholder: 'enter description here', type: 'text', ref: 'description', label: 'Transaction description'}),
-                    React.createElement(ReactBootstrap.ButtonInput, {groupClassName: "col-md-12 text-right", type: 'submit', value: 'submit', className: "btn btn-primary"})
+                    m('td', null, args.description),
+                    m('td', {className: "currency"}, formatCurrency(args.amount)),
+                    m('td', {className: "currency"}, formatCurrency(args.balance))
                 ]
             )
         )
     }
-});
+};
+
+var TranasctionForm = {
+    controller: function (args) {
+      this.submitHandler = function (e) {
+          var transaction = {};
+
+          e.preventDefault();
+
+      // prep transaction object
+          for (var i = 0; i < e.target.length; i++) {
+            if (e.target[i].name) {
+              transaction[e.target[i].name] = e.target[i].value;
+            }
+          }
+
+          transaction.amount = transaction.sign + transaction.amount;
+          transaction.date = Date.now();
+
+      // pass off to parent
+          args.onTransactionSubmit(transaction);
+
+      // reset form
+          e.target.reset();
+      }
+    },
+    view: function (ctrl, args) {
+        return (
+          m('form', {onsubmit: ctrl.submitHandler},
+            [
+                m('.form-group.col-md-3',
+                  [
+                    m('label.control-label', 'Transaction type'),
+                    m('select.form-control', {name: "sign", placeholder: 'select account', label: "Transaction type"},
+                      [
+                        m('option', {value: ''}, 'Deposit'),
+                        m('option', {value: '-'}, 'Withdraw')
+                      ]
+                    )
+                  ]
+                ),
+                m('.form-group.col-md-4',
+                  [
+                    m('label.control-label', 'Transaction amount'),
+                    m('.input-group',
+                      [
+                        m('span.input-group-addon', '$'),
+                        m('input.form-control', {name: "amount", placeholder: '10.00', label: "Transaction amount", type:"number", required:"true"})
+                      ]
+                    )
+                  ]
+                ),
+                m('.form-group.col-md-5',
+                  [
+                    m('label.control-label', 'Transaction description'),
+                    m('input.form-control', {name: "description", placeholder: 'enter description here', label: "Transaction description", type:"text", required:"true"})
+                  ]
+                ),
+                m('.form-group.col-md-12.text-right',
+                  m('input.btn.btn-primary.btn-default', {type:"submit", value:"submit"})
+                )
+            ]
+        )
+      )
+    }
+};

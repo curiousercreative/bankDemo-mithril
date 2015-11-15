@@ -4,26 +4,20 @@
         <title>Banking app demo</title>
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-            
+
     <!-- libraries... -->
         <!-- jQuery -->
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
         <!-- Bootstrap CSS & JS -->
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
-        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
-        <!-- React -->
-        <script src="https://fb.me/react-0.14.0.min.js"></script>
-        <script src="https://fb.me/react-dom-0.14.0.min.js"></script>
-        <!-- React Bootstrap -->
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/react-bootstrap/0.25.1/react-bootstrap.min.js"></script>
+        <!-- Mithril -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/mithril/0.2.0/mithril.js"></script>
         <!-- Redux -->
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/redux/3.0.2/redux.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/redux/3.0.2/redux.js"></script>
         <!--
         <script src="https://raw.githubusercontent.com/fcomb/redux-logger/master/dist/index.min.js"></script>
         -->
-        <!-- React Redux -->
-        <script src="js/lib/react-redux.min.js"></script>
     <!-- app -->
         <link rel="stylesheet" href="style.css">
         <script type="text/javascript" src="js/components.js"></script>
@@ -92,22 +86,22 @@
                     ]
                 }
             ];
-            
+
             var defaultActivePageId = "accounts";
         </script>
     </head>
     <body>
-        <div id="app" class="container">            
+        <div id="app" class="container">
             <div class="page-header">
-                <h1>Welcome to ze Bank</h1>    
+                <h1>Welcome to ze Bank</h1>
             </div>
-            
+
             <div id="navContainer">
-                
+
             </div><!-- end #navContainer -->
-            
+
             <div id="content">
-                
+
             </div> <!-- end #content -->
         </div> <!-- end .container -->
         <!--
@@ -120,7 +114,7 @@
                 Transaction ledger (date, amount, description)
                 Deposit (amount, description)
                 Withdrawal (amount, description)
-                
+
             Toggle between checking and savings account view
         -->
     </body>
