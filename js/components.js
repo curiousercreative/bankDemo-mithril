@@ -1,9 +1,7 @@
 var App = {
     controller: function (args) {
-      var state = store.getState();
-
-      this.activePageId = state.activePageId;
-      this.accounts = accounts;
+      this.activePageId = args.activePageId;
+      this.accounts = args.accounts;
     },
     view: function (ctrl, args) {
         return m('div',
@@ -93,9 +91,8 @@ var Account = {
 
 var Nav = {
     controller: function (args) {
-      var state = store.getState();
-      this.activePageId = state.activePageId;
-      this.accounts = state.accounts;
+      this.activePageId = args.activePageId;
+      this.accounts = args.accounts;
 
       this.isActive = function (id) {
         if (this.activePageId == id) return "active"

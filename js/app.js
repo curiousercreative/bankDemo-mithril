@@ -152,13 +152,13 @@
         // content
         m.mount(
           document.getElementById('content'),
-          m.component(App)
+          m.component(App, store.getState())
         );
 
         // nav
         m.mount(
             document.getElementById('navContainer'),
-            m.component(Nav)
+            m.component(Nav, store.getState())
         );
 
     // Listen for hashChanges
