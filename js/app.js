@@ -3,7 +3,7 @@
     function getActivePageId () {
         var h = window.location.hash;
         for (var i = 0; i < accounts.length; i++) {
-            if (h.search(accounts[i].name) !== -1) return accounts[i].name;
+            if (h.search(accounts[i].id) == 2) return accounts[i].id;
         }
 
     // default to the accounts page
@@ -70,6 +70,8 @@
       }
 // Navigation handler
     function hashChangeHandler () {
+        m.startComputation();
+
     // read the hash value and parse a page id of it
         var id = getActivePageId();
 
@@ -106,7 +108,7 @@
             case "ADD_TRANSACTION":
             // get a ref to the account
                 for (var i = 0; i < state.accounts.length; i++) {
-                    if (state.accounts[i].name == action.payload.account) {
+                    if (state.accounts[i].id == action.payload.account) {
                         var accountIndex = i;
                         break;
                     }
@@ -133,34 +135,29 @@
         }
     }
 
-// Render the UI when ready
     $(document).on('ready', function () {
-    // init redux state store
-        //const logger = reduxLogger.createLogger();
-        //const createStoreWithMiddleware = reduxLogger.applyMiddleware(thunk, promise, logger)(Redux.createStore);
-        //window.store = createStoreWithMiddleware(reducer, {activePageId: getActivePageId(), accounts: accounts});
-        window.store = Redux.createStore(bankApp, {activePageId: getActivePageId(), accounts: accounts});
+      // init redux state store
+          //const logger = reduxLogger.createLogger();
+          //const createStoreWithMiddleware = reduxLogger.applyMiddleware(thunk, promise, logger)(Redux.createStore);
+          //window.store = createStoreWithMiddleware(reducer, {activePageId: getActivePageId(), accounts: accounts});
+          window.store = Redux.createStore(bankApp, {activePageId: getActivePageId(), accounts: accounts});
 
-        // redraws Mithril whenever an action is dispatched
-        store.subscribe(function () {
-          console.log('happening');
-          m.redraw.strategy('all');
-          m.redraw(true);
-        });
+          // redraws Mithril whenever an action is dispatched
+          store.subscribe(m.endComputation);
 
-    // Render Mithril
-        // content
-        m.mount(
-          document.getElementById('content'),
-          m.component(App, store)
-        );
+      // Render Mithril
+          // content
+          m.mount(
+            document.getElementById('content'),
+            m.component(App, {store: store})
+          );
 
-        // nav
-        m.mount(
-            document.getElementById('navContainer'),
-            m.component(Nav, store)
-        );
+          // nav
+          m.mount(
+              document.getElementById('navContainer'),
+              m.component(Nav, {store: store})
+          );
 
-    // Listen for hashChanges
-        $(window).on('hashchange', hashChangeHandler);
+      // Listen for hashChanges
+          $(window).on('hashchange', hashChangeHandler);
     });

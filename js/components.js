@@ -1,11 +1,11 @@
 var App = {
     controller: function (args) {
-      //this.state = args.getState();
-      //this.activePageId = state.activePageId;
-      //this.accounts = state.accounts;
+      this.getState = function () {
+        return this.state = args.store.getState();
+      }
     },
     view: function (ctrl, args) {
-        var state = args.getState();
+        var state = ctrl.getState();
 
         return m('div',
             [
@@ -44,7 +44,7 @@ var AccountOverview = {
                             return m('tr',
                                 [
                                     m('td.accountName',
-                                        m('a', {href: '#/'+account.name}, account.name) // make dynamic
+                                        m('a', {href: '#/'+account.id}, account.name) // make dynamic
                                     ),
                                     m('td.currency', formatCurrency(account.balance))
                                 ]
@@ -68,12 +68,12 @@ var Account = {
             transaction.balance = parseFloat(args.account.balance) + parseFloat(transaction.amount);
 
         // update state
-            store.dispatch(addTransaction(transaction, transaction.balance, args.account.name));
+            store.dispatch(addTransaction(transaction, transaction.balance, args.account.id));
         }
     },
     view: function (ctrl, args) {
         var activePageId = store.getState().activePageId;
-        return m('div#'+args.account.name+'.page'+ctrl.activePage(activePageId, args.account.name),
+        return m('div#'+args.account.name+'.page'+ctrl.activePage(activePageId, args.account.id),
             [
                 m('div.row',
                     [
@@ -99,16 +99,15 @@ var Account = {
 
 var Nav = {
     controller: function (args) {
-      //var state = args.getState();
-      //this.activePageId = state.activePageId;
-      //this.accounts = state.accounts;
+      this.getState = function () {
+        return this.state = args.store.getState();
+      }
 
-      this.isActive = function (activePageId, id) {
-        console.log(activePageId);
-        if (activePageId == id) return "active"
+      this.isActive = function (id) {
+        if (this.state.activePageId == id) return "active"
         // also match for the tab/dropdown item
         else if (
-            activePageId !== defaultActivePageId
+            this.state.activePageId !== defaultActivePageId
             && !id
         ) {
             return "active";
@@ -121,15 +120,15 @@ var Nav = {
       }
     },
     view: function (ctrl, args) {
-        var state = args.getState();
+        var state = ctrl.getState();
         return (
             m('nav#primaryNav[role=tablist]',
               m('ul.nav.nav-tabs',
                 [
-                    m('li[role=presentation]', {className: ctrl.isActive(state.activePageId, "accounts")},
+                    m('li[role=presentation]', {className: ctrl.isActive("accounts")},
                       m('a[href=#/accounts][role=tab]', "Accounts overview")
                     ),
-                    m('li[role=tab].dropdown', {className: ctrl.isActive(state.activePageId), onclick: ctrl.clickHandler},
+                    m('li[role=tab].dropdown', {className: ctrl.isActive(), onclick: ctrl.clickHandler},
                       [
                         m('a#nav-dropdown.dropdown-toggle[aria-expanded=false][aria-haspopup=true][type=button][role=button]',
                           [
@@ -145,8 +144,8 @@ var Nav = {
                         m('ul.dropdown-menu[role=menu]',
                           state.accounts.map(function (account) {
                             return (
-                                m('li', {className: ctrl.isActive(state.activePageId, account.name)},
-                                  m('a', {href: "#/"+account.name}, account.name)
+                                m('li', {className: ctrl.isActive(account.name)},
+                                  m('a', {href: "#/"+account.id}, account.name)
                                 )
                             )
                           })
